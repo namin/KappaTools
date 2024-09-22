@@ -26,10 +26,28 @@ def delete_file(file_path):
 
 app = quart_cors.cors(quart.Quart(__name__), allow_origin="https://chat.openai.com")
 
+def is_num(x):
+    # only nonnegative numbers, float or int
+    return x.replace('.','',1).isdigit()
+
+def check_param_num(request, k, v):
+    x = str(request.get(k, v))
+    if is_num(x):
+        return x, ""
+    else:
+        return v, f"Warning: ignoring parameter {k}, because {x} is not a number -- using default {v} instead.\n"
+
 @app.post("/run")
 async def run():
+    stderr_text = ""
+
     request = await quart.request.get_json(force=True)
     ka = request["ka"]
+    param_l, l_err = check_param_num(request, "l", "100")
+    param_p, p_err = check_param_num(request, "p", "1.0")
+
+    stderr_text += l_err
+    stderr_text += p_err
 
     project_path = "/home/namin/KappaTools"
 
@@ -43,9 +61,9 @@ async def run():
     env['VIRTUAL_ENV'] = venv_path
     env['PATH'] = f"{venv_path}/bin:{env['PATH']}"
 
-    result = subprocess.run([f'{project_path}/bin/KaSim', '-i', 'input.ka', '-l', '100', '-p', '1', '-o', f'{project_path}/output.csv'], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run([f'{project_path}/bin/KaSim', '-i', 'input.ka', '-l', param_l, '-p', param_p, '-o', f'{project_path}/output.csv'], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     text = result.stdout.decode('utf-8')
-    stderr_text = result.stderr.decode('utf-8')
+    stderr_text += result.stderr.decode('utf-8')
 
     with open(f'{project_path}/run.txt', 'w') as file:
         file.write(text)

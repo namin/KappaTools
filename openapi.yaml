@@ -14,7 +14,7 @@ paths:
       summary: Run Kappa simulation
       description: This endpoint accepts Kappa code, writes it to a file, executes the KaSim tool, and returns the simulation result.
       requestBody:
-        description: JSON object containing the Kappa code.
+        description: JSON object containing the Kappa code and optional simulation parameters.
         required: true
         content:
           application/json:
@@ -27,6 +27,17 @@ paths:
                   example: |
                     %agent: A(x)
                     A(x[.]) -> A(x[1]) @ 1.0
+                l:
+                  type: integer
+                  description: Simulation limit (default: 100)
+                  example: 100
+                  default: 100
+                p:
+                  type: number
+                  format: float
+                  description: Plot period (time interval between points in plot) (default: 1.0)
+                  example: 1.0
+                  default: 1.0
               required:
                 - ka
       responses:
